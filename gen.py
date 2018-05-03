@@ -165,5 +165,9 @@ def genaccs(config):
 
 config = readconfig('config.json')
 verifydata(config)
-while True:
+numofaccs = config["numofaccounts"]
+log("Creating " + str(numofaccs) + " accounts...")
+for _ in range(numofaccs):
     genaccs(config)
+log("Successfully created " + str(numofaccs) + " accounts!")
+sys.exit()
