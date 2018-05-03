@@ -1,0 +1,2 @@
+# KithAccountGenerator
+Creates kith accounts.
