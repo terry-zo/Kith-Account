@@ -47,6 +47,7 @@ def verifydata(config):
     for data in config:
         if config[data] == "":
             log(data + " is not filled out in config.json! Exiting...")
+            sys.exit()
 
 
 def request_recaptcha(service_key, google_site_key, pageurl):
