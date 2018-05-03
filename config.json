@@ -5,5 +5,6 @@
     "password":"JohnDoe4130",
     "captchakey":"-------------",
     "sitekey":"6LeoeSkTAAAAAA9rkZs5oS82l69OEYjKRZAiKdaF",
-    "interval": 0.1
+    "interval": 0.1,
+    "numofaccounts":100
 }
