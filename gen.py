@@ -19,7 +19,6 @@ from random import randint
 def log(phrase):
     with open('log.txt', 'a+') as logfile:
         logfile.write(phrase + "\n")
-        logfile.close()
     print phrase
 
 
@@ -154,7 +153,6 @@ def genaccs(config, index):
     log('#{} - Successfully registered.'.format(index))
     with open('Accounts.txt', 'a+') as txtfile:
         txtfile.write(email + ':' + pw + "\n")
-        txtfile.close()
     s.close()
     time.sleep(interval)
 
