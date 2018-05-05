@@ -11,7 +11,7 @@ import random
 import sys
 import json
 import bs4
-import queue
+import Queue
 from bs4 import BeautifulSoup as soup
 from threading import Thread, Lock
 from random import randint
@@ -56,6 +56,7 @@ def request_recaptcha(service_key, google_site_key, pageurl, index):
 
 def receive_token(captcha_id, service_key, index):
     global queue_
+    global lock_
     fetch_url = "http://2captcha.com/res.php?key=" + service_key + "&action=get&id=" + captcha_id
     for count in range(1, 26):
         log("#{} - Attempting to fetch token. {}/25".format(index, count))
@@ -66,7 +67,8 @@ def receive_token(captcha_id, service_key, index):
             return grt
         time.sleep(5)
     log("#{} - No tokens received. Restarting...".format(index))
-    queue_.put(1)
+    with lock_:
+        queue_.put(1)
 
 
 def submit_recaptcha(grt, at, session):
@@ -94,6 +96,7 @@ def submit_recaptcha(grt, at, session):
 
 def grabauthkey(page_html, index):
     global queue_
+    global lock_
     page_soup = soup(page_html, 'html.parser')
     authtokenvar = page_soup.findAll("input", {"name": "authenticity_token"})
     if authtokenvar:
@@ -102,12 +105,16 @@ def grabauthkey(page_html, index):
         return authtoken
     else:
         log("#{} - No authenticity token found. Restarting...".format(index))
-        queue_.put(1)
+        with lock_:
+            queue_.put(1)
 
 
 def genaccs(config, index):
     global queue_
+    global lock_
     while queue_.qsize() > 0:
+        with lock_:
+            queue_.get()
         s = requests.Session()
         fn = config['firstname']
         ln = config['lastname']
@@ -148,35 +155,27 @@ def genaccs(config, index):
             log('#{} - An unexpected ' + str(b.status_code) + ' error has occurred. Exiting...'.format(index))
             sys.exit()
         log('#{} - Successfully registered.'.format(index))
-        with open('Accounts.txt', 'a+') as txtfile:
-            txtfile.write(email + ':' + pw + "\n")
-        queue_.get()
+        with lock_:
+            with open('Accounts.txt', 'a+') as txtfile:
+                txtfile.write(email + ':' + pw + "\n")
         s.close()
         time.sleep(interval)
 
 
 def main(numofaccs, config):
-    thread_list = []
     global queue_
+    global lock_
     for index in range(numofaccs):
-        queue_.put(index)
-    if numofaccs < 15:
-        maxthreads_ = numofaccs
-    else:
-        maxthreads_ = 15
-    for index in range(maxthreads_):
+        with lock_:
+            queue_.put(index)
+    for index in range(15):
         thread_ = Thread(target=genaccs, args=(config, index))
         thread_.start()
-        thread_list.append(thread_)
-    for t_ in thread_list:
-        t_.join()
 
 
-queue_ = queue.Queue()
+queue_ = Queue.Queue()
+lock_ = Lock()
 config = readconfig('config.json')
 verifydata(config)
 numofaccs = config["numofaccounts"]
-start = time.time()
 main(numofaccs, config)
-log("Finished {} accounts in {} seconds!".format(numofaccs, time.time() - start))
-sys.exit()
