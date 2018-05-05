@@ -31,6 +31,6 @@ pip install requests bs4
 
 ## Other scripts
 
-I _might or might not_ release more scripts on my [twitter](https://twitter.com/zoegdoterry).
+I _might or might not_ release more scripts on my [twitter](https://twitter.com/zoegodterry).
 
 Follow to be the **first ones to know**!
