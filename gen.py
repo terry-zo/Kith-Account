@@ -73,7 +73,6 @@ def receive_token(captcha_id, service_key, index):
 
 def submit_recaptcha(grt, at, session):
     payload = {
-        "utf8": "✓",
         "authenticity_token": at,
         "g-recaptcha-response": grt
     }
@@ -123,7 +122,6 @@ def genaccs(config, index):
         email = genemail(config['email'])
         payload = {
             'form_type': 'create_customer',
-            "utf8": "✓",
             "customer[first_name]": fn,
             "customer[last_name]": ln,
             "customer[email]": email,
