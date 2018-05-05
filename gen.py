@@ -11,6 +11,7 @@ import random
 import sys
 import json
 import bs4
+import queue
 from bs4 import BeautifulSoup as soup
 from threading import Thread, Lock
 from random import randint
@@ -54,6 +55,7 @@ def request_recaptcha(service_key, google_site_key, pageurl, index):
 
 
 def receive_token(captcha_id, service_key, index):
+    global queue_
     fetch_url = "http://2captcha.com/res.php?key=" + service_key + "&action=get&id=" + captcha_id
     for count in range(1, 26):
         log("#{} - Attempting to fetch token. {}/25".format(index, count))
@@ -64,11 +66,7 @@ def receive_token(captcha_id, service_key, index):
             return grt
         time.sleep(5)
     log("#{} - No tokens received. Restarting...".format(index))
-    global numofaccs
-    global retry
-    global config
-    retry += 1
-    main(numofaccs, config, retry)
+    queue_.put(1)
 
 
 def submit_recaptcha(grt, at, session):
@@ -95,6 +93,7 @@ def submit_recaptcha(grt, at, session):
 
 
 def grabauthkey(page_html, index):
+    global queue_
     page_soup = soup(page_html, 'html.parser')
     authtokenvar = page_soup.findAll("input", {"name": "authenticity_token"})
     if authtokenvar:
@@ -103,82 +102,77 @@ def grabauthkey(page_html, index):
         return authtoken
     else:
         log("#{} - No authenticity token found. Restarting...".format(index))
-        global numofaccs
-        global retry
-        global config
-        retry += 1
-        main(numofaccs, config, retry)
+        queue_.put(1)
 
 
 def genaccs(config, index):
-    s = requests.Session()
-    fn = config['firstname']
-    ln = config['lastname']
-    pw = config['password']
-    interval = config['interval']
-    email = genemail(config['email'])
-    payload = {
-        'form_type': 'create_customer',
-        "utf8": "✓",
-        "customer[first_name]": fn,
-        "customer[last_name]": ln,
-        "customer[email]": email,
-        "customer[password]": pw
-    }
-    headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflat    e, br',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cache-Control': 'max-age=0',
-        'Connection': 'close',
-        'Content-Length': '205',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Host': 'kith.com',
-        'Referer': 'https://kith.com/account/register',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36'
-    }
-    b = s.post('https://kith.com/account', headers=headers, data=payload, allow_redirects=False)
-    if b.status_code == 302:
-        log('#{} - Requesting Captcha...'.format(index))
-        captcha_id = request_recaptcha(config['captchakey'], config['sitekey'], 'https://kith.com/challenge', index)
-        grt = receive_token(captcha_id, config['captchakey'], index)
-        challenge = s.get('https://kith.com/challenge')
-        challenge_html = challenge.content
-        authtoken = grabauthkey(challenge_html, index)
-        submit_recaptcha(grt, authtoken, s)
+    global queue_
+    while queue_.qsize() > 0:
+        s = requests.Session()
+        fn = config['firstname']
+        ln = config['lastname']
+        pw = config['password']
+        interval = config['interval']
+        email = genemail(config['email'])
+        payload = {
+            'form_type': 'create_customer',
+            "utf8": "✓",
+            "customer[first_name]": fn,
+            "customer[last_name]": ln,
+            "customer[email]": email,
+            "customer[password]": pw
+        }
+        headers = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflat    e, br',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'max-age=0',
+            'Connection': 'close',
+            'Content-Length': '205',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Host': 'kith.com',
+            'Referer': 'https://kith.com/account/register',
+            'Upgrade-Insecure-Requests': '1',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36'
+        }
+        b = s.post('https://kith.com/account', headers=headers, data=payload, allow_redirects=False)
+        if b.status_code == 302:
+            log('#{} - Requesting Captcha...'.format(index))
+            captcha_id = request_recaptcha(config['captchakey'], config['sitekey'], 'https://kith.com/challenge', index)
+            grt = receive_token(captcha_id, config['captchakey'], index)
+            challenge = s.get('https://kith.com/challenge')
+            challenge_html = challenge.content
+            authtoken = grabauthkey(challenge_html, index)
+            submit_recaptcha(grt, authtoken, s)
+        else:
+            log('#{} - An unexpected ' + str(b.status_code) + ' error has occurred. Exiting...'.format(index))
+            sys.exit()
+        log('#{} - Successfully registered.'.format(index))
+        with open('Accounts.txt', 'a+') as txtfile:
+            txtfile.write(email + ':' + pw + "\n")
+        queue_.get()
+        s.close()
+        time.sleep(interval)
+
+
+def main(numofaccs, config):
+    thread_list = []
+    global queue_
+    for index in range(numofaccs):
+        queue_.put(index)
+    if numofaccs < 15:
+        maxthreads_ = numofaccs
     else:
-        log('#{} - An unexpected ' + str(b.status_code) + ' error has occurred. Exiting...'.format(index))
-        sys.exit()
-    log('#{} - Successfully registered.'.format(index))
-    with open('Accounts.txt', 'a+') as txtfile:
-        txtfile.write(email + ':' + pw + "\n")
-    s.close()
-    time.sleep(interval)
+        maxthreads_ = 15
+    for index in range(maxthreads_):
+        thread_ = Thread(target=genaccs, args=(config, index))
+        thread_.start()
+        thread_list.append(thread_)
+    for t_ in thread_list:
+        t_.join()
 
 
-def main(numofaccs, config, retry=0):
-    global thread_list
-    if retry == 0:
-        for index in range(numofaccs):
-            t = Thread(target=genaccs, name=index, args=(config, index))
-            t.start()
-            thread_list.append(t)
-            log("#{} - Creating account".format(index))
-        for t in thread_list:
-            t.join()
-    else:
-        index = numofaccs + retry
-        t = Thread(target=genaccs, name=index, args=(config, index))
-        t.start()
-        thread_list.append(t)
-        log("#{} - Creating account".format(index))
-        for t in thread_list:
-            t.join()
-
-
-retry = 0
-thread_list = []
+queue_ = queue.Queue()
 config = readconfig('config.json')
 verifydata(config)
 numofaccs = config["numofaccounts"]
