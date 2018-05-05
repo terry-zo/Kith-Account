@@ -84,7 +84,7 @@ def submit_recaptcha(grt, at, session):
         "Connection": "close",
         "Content-Length": "614",
         "Content-Type": "application/x-www-form-urlencoded",
-        "Host": " kith.com",
+        "Host": "kith.com",
         "Referer": "https://kith.com/challenge",
         "Upgrade-Insecure-Requests": "1",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36"
