@@ -47,7 +47,7 @@ def request_recaptcha(service_key, google_site_key, pageurl, index):
     url = "http://2captcha.com/in.php?key=" + service_key + "&method=userrecaptcha&googlekey=" + google_site_key + "&pageurl=" + pageurl
     resp = requests.get(url)
     if resp.text[0:2] != 'OK':
-        log("#{} - Error: {} Exiting...".format(index. resp.text))
+        log("#{} - Error: {} Exiting...".format(index, resp.text))
         sys.exit()
     captcha_id = resp.text[3:]
     log("#{} - Successfully requested for captcha.".format(index))
