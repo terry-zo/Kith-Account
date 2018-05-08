@@ -19,15 +19,19 @@ Creates kith accounts with captcha requests from 2captcha.
 **_Note_** If you don't have a 2captcha account, you can create one [here](https://goo.gl/T1c75n).
 
 ## Proxies
-#Proxies implemented 5/8/18
+Proxies implemented 5/8/18
 
   * Every proxy must be the following format:
+
     * Supports IP Authentication proxies:
       * ```ip:host```
+
     * Supports user:pass Authentication proxies:
       * ```ip:host:user:pass```
+
   * Every proxy must be on its own line.
-  * Proxies.txt Example:
+
+  * **Example**:
 	```
 	123.123.123.123:12345:hello:bye
 	123.123.123.123:12345:hello:bye
