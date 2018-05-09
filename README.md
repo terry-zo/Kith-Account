@@ -6,7 +6,7 @@ Creates kith accounts with captcha requests from 2captcha.
 ## Instructions
 
   * First, you must enter all appropriate information in **config.json**.
-    * **email** is the email you want all your kith accounts under.
+    * **email** is the email you want all your kith accounts under. Please refer to **E-Mail**.
     * **firstname** is the first name of every kith account generated.
     * **lastname** is the last name of every kith account generated.
     * **password** is the password of every kith account generated.
@@ -44,6 +44,15 @@ _Proxies implemented 5-8-18_
   123.123.123.123:12345
   123.123.123.123:12345
   ```
+
+## E-Mail
+_Catch-all implemented 5-9-18_
+
+  * **email** in **config.json** must be the following format:
+  * ```
+zoegodterry@gmail.com
+@zoegodterry.club
+```
 
 ## Required modules
 
