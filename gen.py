@@ -133,7 +133,7 @@ def genaccs(config, index):
         with lock_:
             queue_.get()
         rand_proxy = choice(p_list)
-        if not rand_proxy in p_list_lock:
+        if (not rand_proxy in p_list_lock) or (rand_proxy == None):
             with p_lock:
                 p_list_lock.append(rand_proxy)
                 log("Using proxy: " + str(rand_proxy))
@@ -152,7 +152,7 @@ def genaccs(config, index):
             }
             headers = {
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Encoding': 'gzip, deflat    e, br',
+                'Accept-Encoding': 'gzip, deflate, br',
                 'Accept-Language': 'en-US,en;q=0.9',
                 'Cache-Control': 'max-age=0',
                 'Connection': 'close',
@@ -182,7 +182,6 @@ def genaccs(config, index):
             unlock_p(rand_proxy)
             time.sleep(interval)
         else:
-            log("Proxy in use: " + str(rand_proxy))
             with lock_:
                 queue_.put(1)
 
