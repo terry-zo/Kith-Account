@@ -20,7 +20,7 @@ from random import randint, choice
 
 def log(phrase):
     global l_lock, logconsole
-    if logconsole == True:
+    if logconsole == "True":
         with l_lock:
             with open('log.txt', 'a+') as logfile:
                 logfile.write(phrase + "\n")

@@ -8,5 +8,5 @@
     "interval": 0.1,
     "numofaccounts":1,
     "proxyfile":"Proxies.txt",
-    "logconsole":True
+    "logconsole":"False"
 }
