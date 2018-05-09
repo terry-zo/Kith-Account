@@ -14,6 +14,8 @@ Creates kith accounts with captcha requests from 2captcha.
     * **sitekey** is the captcha identifier for [kith](https://kith.com/). The sitekey is pre-filled, and should only be changed if [kith](https://kith.com/) renewed their sitekey.
     * **interval** is the amount of time the script waits _(in seconds)_ before creating the next account.
     * **numofaccounts** is the amount of accounts you want the script the create.
+    * **proxyfile** is the name of the file your proxies are in.
+    * **logconsole** can only be **True** or **False**, where the user can determine if they want a log.txt for debugging purposes.
   * Secondly, you must install the modules required for the script to work. Please refer to **Required modules**.
 
 **_Note_** If you don't have a 2captcha account, you can create one [here](https://goo.gl/T1c75n).
