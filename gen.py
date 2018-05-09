@@ -148,10 +148,11 @@ def genaccs(config, index):
         with lock_:
             queue_.get()
         rand_proxy = choice(p_list)
-        if (not rand_proxy in p_list_lock) or (rand_proxy == None):
-            with p_lock:
-                p_list_lock.append(rand_proxy)
-                log("Using proxy: " + str(rand_proxy))
+        if not rand_proxy in p_list_lock:
+            if rand_proxy != None:
+                with p_lock:
+                    p_list_lock.append(rand_proxy)
+                    log("Using proxy: " + str(rand_proxy))
             s = requests.Session()
             fn = config['firstname']
             ln = config['lastname']
@@ -203,10 +204,10 @@ def genaccs(config, index):
 
 def unlock_p(rand_proxy):
     global p_list_lock, p_lock
-    if rand_proxy in p_list_lock:
+    if (rand_proxy in p_list_lock) and (rand_proxy != None):
         with p_lock:
             p_list_lock.remove(rand_proxy)
-            log("Released proxy: " + rand_proxy)
+            log("Released proxy: " + str(rand_proxy))
 
 
 def main(numofaccs, config):
