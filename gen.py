@@ -19,11 +19,12 @@ from random import randint, choice
 
 
 def log(phrase):
-    global l_lock
-    with l_lock:
-        with open('log.txt', 'a+') as logfile:
-            logfile.write(phrase + "\n")
-            print phrase
+    global l_lock, logconsole
+    if logconsole == True:
+        with l_lock:
+            with open('log.txt', 'a+') as logfile:
+                logfile.write(phrase + "\n")
+    print phrase
 
 
 def readconfig(filename):
@@ -222,5 +223,6 @@ if __name__ == "__main__":
     l_lock = Lock()
     t_list = []
     t_lock = Lock()
+    logconsole = config["logconsole"]
     numofaccs = config["numofaccounts"]
     main(numofaccs, config)

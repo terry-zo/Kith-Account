@@ -7,5 +7,6 @@
     "sitekey":"6LeoeSkTAAAAAA9rkZs5oS82l69OEYjKRZAiKdaF",
     "interval": 0.1,
     "numofaccounts":1,
-    "proxyfile":"Proxies.txt"
+    "proxyfile":"Proxies.txt",
+    "logconsole":True
 }
