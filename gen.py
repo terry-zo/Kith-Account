@@ -207,7 +207,7 @@ def main(numofaccs, config):
             thread_.start()
     for t_ in t_list:
         t_.join()
-    log("Finished {} in {}".format(numofaccs, (st_ - time.time())))
+    log("Finished {} in {}".format(numofaccs, (time.time() - st_)))
 
 
 if __name__ == "__main__":
