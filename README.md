@@ -49,8 +49,10 @@ _Proxies implemented 5-8-18_
 _Catch-all implemented 5-9-18_
 
   * **email** in **config.json** must be the following format:
-  * ```zoegodterry@gmail.com
-  @zoegodterry.club```
+  ```
+  zoegodterry@gmail.com
+  @zoegodterry.club
+  ```
 
 ## Required modules
 
