@@ -19,9 +19,11 @@ from random import randint, choice
 
 
 def log(phrase):
-    with open('log.txt', 'a+') as logfile:
-        logfile.write(phrase + "\n")
-    print phrase
+    global l_lock
+    with l_lock:
+        with open('log.txt', 'a+') as logfile:
+            logfile.write(phrase + "\n")
+            print phrase
 
 
 def readconfig(filename):
@@ -67,7 +69,6 @@ def request_recaptcha(service_key, google_site_key, pageurl, index):
     resp = requests.get(url)
     if resp.text[0:2] != 'OK':
         log("#{} - Error: {} Exiting...".format(index, resp.text))
-        sys.exit()
     captcha_id = resp.text[3:]
     log("#{} - Successfully requested for captcha.".format(index))
     return captcha_id
@@ -172,20 +173,17 @@ def genaccs(config, index):
                 submit_recaptcha(grt, authtoken, s, rand_proxy)
             else:
                 log('#{} - An unexpected ' + str(b.status_code) + ' error has occurred.'.format(index))
-                sys.exit()
             log('#{} - Successfully registered.'.format(index))
             with a_lock:
                 with open('Accounts.txt', 'a+') as txtfile:
                     txtfile.write(email + ':' + pw + "\n")
             s.close()
-
+            unlock_p(rand_proxy)
             time.sleep(interval)
         else:
             log("Proxy in use: " + str(rand_proxy))
             with lock_:
                 queue_.put(1)
-        if threading.active_count() - 1 < 10:
-            Thread(target=genaccs, args=(config, index)).start()
 
 
 def unlock_p(rand_proxy):
@@ -197,13 +195,19 @@ def unlock_p(rand_proxy):
 
 
 def main(numofaccs, config):
-    global queue_, lock_
+    global queue_, lock_, t_list, t_lock
     for index in range(numofaccs):
         with lock_:
             queue_.put(index)
-    for index in range(15):
-        thread_ = Thread(target=genaccs, args=(config, index))
-        thread_.start()
+    st_ = time.time()
+    with t_lock:
+        for index in range(10):
+            thread_ = Thread(target=genaccs, args=(config, index))
+            t_list.append(thread_)
+            thread_.start()
+    for t_ in t_list:
+        t_.join()
+    log("Finished {} in {}".format(numofaccs, (st_ - time.time())))
 
 
 if __name__ == "__main__":
@@ -215,5 +219,8 @@ if __name__ == "__main__":
     p_lock = Lock()
     p_list_lock = []
     a_lock = Lock()
+    l_lock = Lock()
+    t_list = []
+    t_lock = Lock()
     numofaccs = config["numofaccounts"]
     main(numofaccs, config)
