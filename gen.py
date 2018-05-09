@@ -11,6 +11,7 @@ import random
 import sys
 import json
 import bs4
+import names
 import Queue
 import threading
 from bs4 import BeautifulSoup as soup
@@ -34,10 +35,24 @@ def readconfig(filename):
 
 
 def genemail(rawemail):
-    front = rawemail.split("@")[0]
-    provider = rawemail.split("@")[1]
-    bignum = str(randint(1, 1000000))
-    return front + "+" + bignum + '@' + provider
+    if rawemail[0] != "@":
+        splitstuff = rawemail.split("@")
+        for item in splitstuff:
+            if item.strip() == "":
+                splitstuff.remove(item)
+        front = splitstuff[0]
+        provider = splitstuff[1]
+        bignum = str(randint(1, 1000000))
+        return front + "+" + bignum + '@' + provider
+    else:
+        front = names.get_first_name() + names.get_last_name()
+        splitstuff = rawemail.split("@")
+        for item in splitstuff:
+            if item.strip() == "":
+                splitstuff.remove(item)
+        provider = splitstuff[0]
+        bignum = str(randint(1, 1000000))
+        return front + bignum + "@" + provider
 
 
 def verifydata(config):
