@@ -206,9 +206,7 @@ def genaccs(config, index):
                 with lock_:
                     queue_.put(1)
         except Exception:
-            with lock_:
-                queue_.put(1)
-            time.sleep(1)
+            pass
 
 
 def unlock_p(rand_proxy):
