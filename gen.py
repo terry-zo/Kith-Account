@@ -183,7 +183,7 @@ def genaccs(config, index):
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36'
                 }
                 with requests.Session() as s:
-                    b = s.post('https://kith.com/account', headers=headers, data=payload, allow_redirects=False, proxies={"https": rand_proxy}, timeout=30)
+                    b = s.post('https://kith.com/account', headers=headers, data=payload, proxies={"https": rand_proxy}, timeout=30)
                     if (b.url == "https://kith.com/challenge") or (b.url == "https://kith.com/challenge/"):
                         print('#{} - Requesting Captcha...'.format(index))
                         captcha_id = request_recaptcha(config['captchakey'], config['sitekey'], 'https://kith.com/challenge', index)
