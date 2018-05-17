@@ -184,26 +184,30 @@ def genaccs(config, index):
                 }
                 with requests.Session() as s:
                     b = s.post('https://kith.com/account', headers=headers, data=payload, proxies={"https": rand_proxy}, timeout=30)
-                    if (b.url == "https://kith.com/challenge") or (b.url == "https://kith.com/challenge/"):
-                        print('#{} - Requesting Captcha...'.format(index))
-                        captcha_id = request_recaptcha(config['captchakey'], config['sitekey'], 'https://kith.com/challenge', index)
-                        grt = receive_token(captcha_id, config['captchakey'], index)
-                        challenge = s.get('https://kith.com/challenge')
-                        challenge_html = challenge.content
-                        authtoken = grabauthkey(challenge_html, index)
-                        submit_recaptcha(grt, authtoken, s, rand_proxy)
-                        log('#{} - Successfully registered.'.format(index))
-                        with a_lock:
-                            with open('Accounts.txt', 'a+') as txtfile:
-                                txtfile.write(email + ':' + pw + "\n")
-                    elif (b.url == "https://kith.com/account/") or (b.url == "https://kith.com/account"):
-                        print("No Captcha Required.")
-                        log('#{} - Successfully registered.'.format(index))
-                        with a_lock:
-                            with open('Accounts.txt', 'a+') as txtfile:
-                                txtfile.write(email + ':' + pw + "\n")
+                    if b.status_code == 200:
+                        if (b.url == "https://kith.com/challenge") or (b.url == "https://kith.com/challenge/"):
+                            print('#{} - Requesting Captcha...'.format(index))
+                            captcha_id = request_recaptcha(config['captchakey'], config['sitekey'], 'https://kith.com/challenge', index)
+                            grt = receive_token(captcha_id, config['captchakey'], index)
+                            challenge = s.get('https://kith.com/challenge')
+                            challenge_html = challenge.content
+                            authtoken = grabauthkey(challenge_html, index)
+                            submit_recaptcha(grt, authtoken, s, rand_proxy)
+                            log('#{} - Successfully registered.'.format(index))
+                            with a_lock:
+                                with open('Accounts.txt', 'a+') as txtfile:
+                                    txtfile.write(email + ':' + pw + "\n")
+                        elif (b.url == "https://kith.com/account/") or (b.url == "https://kith.com/account"):
+                            print("No Captcha Required.")
+                            log('#{} - Successfully registered.'.format(index))
+                            with a_lock:
+                                with open('Accounts.txt', 'a+') as txtfile:
+                                    txtfile.write(email + ':' + pw + "\n")
+                        else:
+                            log('#{} - An unexpected error has occurred.'.format(index))
+                            with lock_:
+                                queue_.put(1)
                     else:
-                        log('#{} - An unexpected ' + str(b.status_code) + ' error has occurred.'.format(index))
                         with lock_:
                             queue_.put(1)
                 unlock_p(rand_proxy)
