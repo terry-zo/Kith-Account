@@ -91,8 +91,6 @@ def receive_token(captcha_id, service_key):
             return grt
         time.sleep(5)
     print("No tokens received.")
-    with lock_:
-        queue_.put(1)
     raise
 
 
@@ -115,7 +113,10 @@ def submit_recaptcha(grt, at, session, rand_proxy):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36"
     }
     resp = session.post('https://kith.com/account', headers=headers, data=payload, allow_redirects=False, proxies={"https": rand_proxy}, timeout=30)
-    return resp
+    if resp.status_code == 200:
+        return resp
+    else:
+        raise
 
 
 def grabauthkey(page_html):
@@ -127,8 +128,6 @@ def grabauthkey(page_html):
         return authtoken
     else:
         print("No authenticity token found. Restarting...")
-        with lock_:
-            queue_.put(1)
         raise
 
 
@@ -189,17 +188,13 @@ def genaccs(config):
                                 with open('Accounts.txt', 'a+') as txtfile:
                                     txtfile.write(email + ':' + pw + "\n")
                         else:
-                            print('An unexpected error has occurred.')
-                            with lock_:
-                                queue_.put(1)
+                            raise
                     else:
-                        with lock_:
-                            queue_.put(1)
+                        raise
                 unlock_p(rand_proxy)
                 time.sleep(interval)
             else:
-                with lock_:
-                    queue_.put(1)
+                raise
         except Exception as e:
             with lock_:
                 queue_.put(1)
@@ -221,7 +216,7 @@ def main(numofaccs, config):
     st_ = time.time()
     threads = []
     for _ in range(10):
-        t = Thread(target=genaccs, args=(config))
+        t = Thread(target=genaccs, args=(config,))
         threads.append(t)
     [t.start() for t in threads]
     [t.join() for t in threads]
