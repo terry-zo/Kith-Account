@@ -19,15 +19,6 @@ from threading import Thread, Lock
 from random import randint, choice
 
 
-def log(phrase):
-    global l_lock, logconsole
-    if logconsole == "True":
-        with l_lock:
-            with open('log.txt', 'a+') as logfile:
-                logfile.write(phrase + "\n")
-    print phrase
-
-
 def readconfig(filename):
     with open(filename, 'r') as config_json:
         config_data = config_json.read()
@@ -58,7 +49,7 @@ def genemail(rawemail):
 def verifydata(config):
     for data in config:
         if config[data] == "":
-            log("{} is not filled out in config.json! Exiting...".format(data))
+            print("{} is not filled out in config.json! Exiting...".format(data))
             sys.exit()
 
 
@@ -80,29 +71,26 @@ def readproxyfile(proxyfile):
     return proxies_list
 
 
-def request_recaptcha(service_key, google_site_key, pageurl, index):
+def request_recaptcha(service_key, google_site_key, pageurl):
     url = "http://2captcha.com/in.php?key=" + service_key + "&method=userrecaptcha&googlekey=" + google_site_key + "&pageurl=" + pageurl
     resp = requests.get(url)
     if resp.text[0:2] != 'OK':
-        log("#{} - Error: {} Exiting...".format(index, resp.text))
+        print("Error: {} Exiting...".format(resp.text))
         raise
     captcha_id = resp.text[3:]
-    print("#{} - Successfully requested for captcha.".format(index))
     return captcha_id
 
 
-def receive_token(captcha_id, service_key, index):
+def receive_token(captcha_id, service_key):
     global queue_, lock_
     fetch_url = "http://2captcha.com/res.php?key=" + service_key + "&action=get&id=" + captcha_id
     for count in range(1, 26):
-        print("#{} - Attempting to fetch token. {}/25".format(index, count))
         resp = requests.get(fetch_url)
         if resp.text[0:2] == 'OK':
             grt = resp.text.split('|')[1]  # g-recaptcha-token
-            print("#{} - Captcha token received.".format(index))
             return grt
         time.sleep(5)
-    print("#{} - No tokens received. Restarting...".format(index))
+    print("No tokens received.")
     with lock_:
         queue_.put(1)
     raise
@@ -130,22 +118,21 @@ def submit_recaptcha(grt, at, session, rand_proxy):
     return resp
 
 
-def grabauthkey(page_html, index):
+def grabauthkey(page_html):
     global queue_, lock_
     page_soup = soup(page_html, 'html.parser')
     authtokenvar = page_soup.findAll("input", {"name": "authenticity_token"})
     if authtokenvar:
         authtoken = authtokenvar[0]["value"]
-        print("#{} - Authenticity token found.".format(index))
         return authtoken
     else:
-        log("#{} - No authenticity token found. Restarting...".format(index))
+        print("No authenticity token found. Restarting...")
         with lock_:
             queue_.put(1)
         raise
 
 
-def genaccs(config, index):
+def genaccs(config):
     global queue_, lock_, p_list, p_list_lock, p_lock, a_lock
     while queue_.qsize() > 0:
         try:
@@ -156,7 +143,6 @@ def genaccs(config, index):
                 if rand_proxy != None:
                     with p_lock:
                         p_list_lock.append(rand_proxy)
-                        print("Using proxy: " + str(rand_proxy))
                 fn = config['firstname']
                 ln = config['lastname']
                 pw = config['password']
@@ -186,25 +172,24 @@ def genaccs(config, index):
                     b = s.post('https://kith.com/account', headers=headers, data=payload, proxies={"https": rand_proxy}, timeout=30)
                     if b.status_code == 200:
                         if (b.url == "https://kith.com/challenge") or (b.url == "https://kith.com/challenge/"):
-                            print('#{} - Requesting Captcha...'.format(index))
-                            captcha_id = request_recaptcha(config['captchakey'], config['sitekey'], 'https://kith.com/challenge', index)
-                            grt = receive_token(captcha_id, config['captchakey'], index)
+                            print("Waiting for captcha.")
+                            captcha_id = request_recaptcha(config['captchakey'], config['sitekey'], 'https://kith.com/challenge')
+                            grt = receive_token(captcha_id, config['captchakey'])
                             challenge = s.get('https://kith.com/challenge')
                             challenge_html = challenge.content
-                            authtoken = grabauthkey(challenge_html, index)
+                            authtoken = grabauthkey(challenge_html)
                             submit_recaptcha(grt, authtoken, s, rand_proxy)
-                            log('#{} - Successfully registered.'.format(index))
+                            print('Successfully registered.')
                             with a_lock:
                                 with open('Accounts.txt', 'a+') as txtfile:
                                     txtfile.write(email + ':' + pw + "\n")
                         elif (b.url == "https://kith.com/account/") or (b.url == "https://kith.com/account"):
-                            print("No Captcha Required.")
-                            log('#{} - Successfully registered.'.format(index))
+                            print('Successfully registered.')
                             with a_lock:
                                 with open('Accounts.txt', 'a+') as txtfile:
                                     txtfile.write(email + ':' + pw + "\n")
                         else:
-                            log('#{} - An unexpected error has occurred.'.format(index))
+                            print('An unexpected error has occurred.')
                             with lock_:
                                 queue_.put(1)
                     else:
@@ -215,10 +200,10 @@ def genaccs(config, index):
             else:
                 with lock_:
                     queue_.put(1)
-        except Exception:
+        except Exception as e:
             with lock_:
                 queue_.put(1)
-            time.sleep(1)
+            excepName = type(e).__name__
 
 
 def unlock_p(rand_proxy):
@@ -226,23 +211,21 @@ def unlock_p(rand_proxy):
     if (rand_proxy in p_list_lock) and (rand_proxy != None):
         with p_lock:
             p_list_lock.remove(rand_proxy)
-            print("Released proxy: " + str(rand_proxy))
 
 
 def main(numofaccs, config):
     global queue_, lock_, t_list, t_lock
-    for index in range(numofaccs):
+    for _ in range(numofaccs):
         with lock_:
-            queue_.put(index)
+            queue_.put(1)
     st_ = time.time()
-    with t_lock:
-        for index in range(10):
-            thread_ = Thread(target=genaccs, args=(config, index))
-            t_list.append(thread_)
-            thread_.start()
-    for t_ in t_list:
-        t_.join()
-    log("Finished {} in {}".format(numofaccs, (time.time() - st_)))
+    threads = []
+    for _ in range(10):
+        t = Thread(target=genaccs, args=(config))
+        threads.append(t)
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+    print("Finished {} in {}".format(str(numofaccs), (time.time() - st_)))
 
 
 if __name__ == "__main__":
@@ -257,6 +240,5 @@ if __name__ == "__main__":
     l_lock = Lock()
     t_list = []
     t_lock = Lock()
-    logconsole = config["logconsole"]
     numofaccs = config["numofaccounts"]
     main(numofaccs, config)
