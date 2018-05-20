@@ -112,7 +112,7 @@ def submit_recaptcha(grt, at, session, rand_proxy):
         "Upgrade-Insecure-Requests": "1",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36"
     }
-    resp = session.post('https://kith.com/account', headers=headers, data=payload, allow_redirects=False, proxies={"https": rand_proxy}, timeout=30)
+    resp = session.post('https://kith.com/account', headers=headers, data=payload, proxies={"https": rand_proxy}, timeout=30)
     if resp.status_code == 200:
         return resp
     else:
